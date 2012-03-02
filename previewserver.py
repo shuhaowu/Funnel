@@ -4,8 +4,13 @@ import markdown
 import os
 import json
 app = flask.Flask(__name__)
+import datetime
 
 EXTENSIONS = ["markdown", "md", "mkd", "txt"]
+
+@app.before_request
+def beforeRequest():
+  app.jinja_env.globals["generated"] = datetime.datetime.now()
 
 def getFilename(folder, name):
   for ext in EXTENSIONS:
@@ -23,9 +28,11 @@ def retrieveContent(folder, name):
   filename = getFilename(folder, name)
   if filename is None:
     return None
+
   f = codecs.open(filename, mode="r", encoding="utf8")
   text = f.read()
   f.close()
+
   return markdown.markdown(text)
 
 def retrieveMeta(folder, name):
@@ -49,10 +56,14 @@ def displayPost(postname):
 
 @app.route("/<pagename>/")
 def displayPage(pagename):
+  if pagename == "favicon.ico":
+    return flask.abort(404)# TODO: Implement this
+
   content = retrieveContent("pages", pagename)
   meta = retrieveMeta("pages", pagename)
   if content is None:
     return flask.abort(404)
+
   return flask.render_template("website.html", content=content,
       title=meta.pop("title"), meta=meta)
 
