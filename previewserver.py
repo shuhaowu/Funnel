@@ -25,9 +25,7 @@ def getFilename(folder, name):
   else:
     return None
 
-
 sectionHeadersRegex = re.compile(r"(===)\W+(\w+)\W+(===)")
-
 sectionBodyRegex = r"===\W+%s\W+===(.+)---\W+%s\W+---"
 def retrieveContent(folder, name):
   filename = getFilename(folder, name)
