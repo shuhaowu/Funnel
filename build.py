@@ -6,6 +6,9 @@ freezer = Freezer(app)
 
 @freezer.register_generator
 def displayPost():
+  if not os.path.exists("posts"):
+    return
+
   files = os.listdir("posts")
   for filename in files:
     if filename.endswith("meta") and os.path.isfile("posts/%s" % filename):
