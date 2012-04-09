@@ -55,7 +55,7 @@ def retrieveMeta(folder, name):
   return json.loads(text)
 
 @app.route("/blog/")
-def displayBlog():
+def displayBlog(): #TODO: not complete
   return flask.render_template("blog.html")
 
 @app.route("/blog/<postname>/")
@@ -64,7 +64,7 @@ def displayPost(postname):
   meta = retrieveMeta("posts", postname)
   if content is None:
     return flask.abort(404)
-  return flask.render_template("post.html",
+  return flask.render_template("post.html", post=postname
       title=meta.pop("title"), meta=meta, **content)
 
 @app.route("/<pagename>/")
@@ -78,7 +78,7 @@ def displayPage(pagename):
   if content is None:
     return flask.abort(404)
 
-  return flask.render_template(template,
+  return flask.render_template(template, page=pagename
       title=meta.pop("title"), meta=meta, **content)
 
 @app.route("/")
