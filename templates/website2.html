@@ -1,0 +1,15 @@
+<html>
+<meta>
+<title>{{ title }}</title>
+</meta>
+<body>
+{% autoescape off %}
+{{ content }}
+{% endautoescape %}
+<hr />
+<hr />
+{% autoescape off %}
+{{ section2 }}
+{% endautoescape %}
+</body>
+</html>

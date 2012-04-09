@@ -76,10 +76,11 @@ def displayPage(pagename):
 
   content = retrieveContent("pages", pagename)
   meta = retrieveMeta("pages", pagename)
+  template = meta.get("template", "website.html")
   if content is None:
     return flask.abort(404)
 
-  return flask.render_template("website.html",
+  return flask.render_template(template,
       title=meta.pop("title"), meta=meta, **content)
 
 @app.route("/")
