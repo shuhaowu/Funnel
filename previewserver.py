@@ -5,6 +5,7 @@ import os
 import json
 app = flask.Flask(__name__)
 import datetime
+import re
 
 EXTENSIONS = ["markdown", "md", "mkd", "txt"]
 
@@ -24,6 +25,10 @@ def getFilename(folder, name):
   else:
     return None
 
+
+sectionHeadersRegex = re.compile(r"(===)\W+(\w+)\W+(===)")
+
+sectionBodyRegex = r"===\W+%s\W+===(.+)---\W+%s\W+---"
 def retrieveContent(folder, name):
   filename = getFilename(folder, name)
   if filename is None:
@@ -33,7 +38,17 @@ def retrieveContent(folder, name):
   text = f.read()
   f.close()
 
-  return markdown.markdown(text)
+  sectionHeaders = sectionHeadersRegex.findall(text)
+  if len(sectionHeaders) == 0:
+    return {"content" : markdown.markdown(text)}
+  else:
+    sections = {}
+    for section in sectionHeaders:
+      sectionName = section[1]
+      sectionBody = re.findall(sectionBodyRegex % (sectionName, sectionName), text, flags=re.S)[0]
+      sectionBody = sectionBody.strip()
+      sections[sectionName] = markdown.markdown(sectionBody)
+    return sections
 
 def retrieveMeta(folder, name):
   f = codecs.open("%s/%s.meta" % (folder, name), mode="r", encoding="utf8")
@@ -51,8 +66,8 @@ def displayPost(postname):
   meta = retrieveMeta("posts", postname)
   if content is None:
     return flask.abort(404)
-  return flask.render_template("post.html", content=content,
-      title=meta.pop("title"), meta=meta)
+  return flask.render_template("post.html",
+      title=meta.pop("title"), meta=meta, **content)
 
 @app.route("/<pagename>/")
 def displayPage(pagename):
@@ -64,8 +79,8 @@ def displayPage(pagename):
   if content is None:
     return flask.abort(404)
 
-  return flask.render_template("website.html", content=content,
-      title=meta.pop("title"), meta=meta)
+  return flask.render_template("website.html",
+      title=meta.pop("title"), meta=meta, **content)
 
 @app.route("/")
 def home():
