@@ -11,6 +11,16 @@ Funnel is dependant on markdown (python), flask, and frozen flask.
 Funnel is licensed under GPLv3. This does not mean you need to open source the
 sites you create this this tool, as this thing helps you build it.
 
+
+Requirements
+===========
+
+ 1. Git
+ 2. Python 2
+ 3. Python-Flask
+ 4. Frozen-Flask
+ 5. Something to write text files with
+
 Howto
 =====
 
