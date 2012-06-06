@@ -25,3 +25,4 @@ def displayPage():
 
 if __name__ == "__main__":
   freezer.freeze()
+  print "Build Complete!"

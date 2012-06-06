@@ -19,7 +19,8 @@ Requirements
  2. Python 2
  3. Python-Flask
  4. Frozen-Flask
- 5. Something to write text files with
+ 5. Python-Markdown
+ 6. Something to write text files with
 
 Howto
 =====
