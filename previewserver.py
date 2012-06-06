@@ -9,6 +9,9 @@ import re
 
 EXTENSIONS = ["markdown", "md", "mkd", "txt"]
 
+with open("config.json") as f:
+  config = json.load(f)
+
 @app.before_request
 def beforeRequest():
   app.jinja_env.globals["generated"] = datetime.datetime.now()
@@ -67,8 +70,7 @@ def displayPost(postname):
   return flask.render_template("post.html", post=postname,
       title=meta.pop("title"), meta=meta, **content)
 
-@app.route("/<pagename>/")
-def displayPage(pagename):
+def _displayPage(pagename):
   if pagename == "favicon.ico":
     return flask.abort(404)# TODO: Implement this
 
@@ -80,6 +82,14 @@ def displayPage(pagename):
 
   return flask.render_template(template, page=pagename,
       title=meta.pop("title"), meta=meta, **content)
+
+@app.route("/<pagename>/")
+def displayPage(pagename):
+  return _displayPage(pagename)
+
+@app.route(("/%s" % config["404name"]) + ("" if config["404type"] == "file" else "/"))
+def display404():
+  return _displayPage("404")
 
 @app.route("/")
 def home():
