@@ -63,8 +63,11 @@ def displayBlog(): #TODO: not complete
 
 @app.route("/blog/<postname>/")
 def displayPost(postname):
-  content = retrieveContent("posts", postname)
-  meta = retrieveMeta("posts", postname)
+  try:
+    content = retrieveContent("posts", postname)
+    meta = retrieveMeta("posts", postname)
+  except IOException:
+    return flask.abort(404)
   if content is None:
     return flask.abort(404)
   return flask.render_template("post.html", post=postname,
@@ -74,8 +77,11 @@ def _displayPage(pagename):
   if pagename == "favicon.ico":
     return flask.abort(404)# TODO: Implement this
 
-  content = retrieveContent("pages", pagename)
-  meta = retrieveMeta("pages", pagename)
+  try:
+    content = retrieveContent("pages", pagename)
+    meta = retrieveMeta("pages", pagename)
+  except IOError:
+    return flask.abort(404)
   template = meta.get("template", "website.html")
   if content is None:
     return flask.abort(404)
@@ -87,9 +93,10 @@ def _displayPage(pagename):
 def displayPage(pagename):
   return _displayPage(pagename)
 
-@app.route(("/%s" % config["404name"]) + ("" if config["404type"] == "file" else "/"))
-def display404():
-  return _displayPage("404")
+if "404name" in config:
+  @app.route(("/%s" % config["404name"]) + ("" if config["404type"] == "file" else "/"))
+  def display404():
+    return _displayPage("404")
 
 @app.route("/")
 def home():
