@@ -41,14 +41,14 @@ def retrieveContent(folder, name):
 
   sectionHeaders = sectionHeadersRegex.findall(text)
   if len(sectionHeaders) == 0:
-    return {"content" : markdown.markdown(text)}
+    return {"content" : text}
   else:
     sections = {}
     for section in sectionHeaders:
       sectionName = section[1]
       sectionBody = re.findall(sectionBodyRegex % (sectionName, sectionName), text, flags=re.S)[0]
       sectionBody = sectionBody.strip()
-      sections[sectionName] = markdown.markdown(sectionBody)
+      sections[sectionName] = sectionBody
     return sections
 
 def retrieveMeta(folder, name):
@@ -66,6 +66,9 @@ def displayPost(postname):
   try:
     content = retrieveContent("posts", postname)
     meta = retrieveMeta("posts", postname)
+    if not meta.get("html", False):
+      for c in content:
+        content[c] = markdown.markdown(content[c])
   except IOException:
     return flask.abort(404)
   if content is None:
@@ -80,6 +83,9 @@ def _displayPage(pagename):
   try:
     content = retrieveContent("pages", pagename)
     meta = retrieveMeta("pages", pagename)
+    if not meta.get("html", False):
+      for c in content:
+        content[c] = markdown.markdown(content[c])
   except IOError:
     return flask.abort(404)
   template = meta.get("template", "website.html")
