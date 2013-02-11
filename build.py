@@ -1,3 +1,4 @@
+#!/usr/bin/python
 from flask_frozen import Freezer
 from previewserver import app, setup_server, get_config
 import os

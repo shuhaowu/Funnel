@@ -188,3 +188,16 @@ Here's a list of all the variables passed into jinja2 by funnel.
  - `content`: Not necessarily available. Available if there's a section named
    `content` in the markdown file, or if there's 0 sections specified and the
    whole markdown file is treated as one big section named `content`
+
+Command Line Howtos
+===================
+
+Funnel allows you to serve up content from another directory. Just pass in
+the path (relative or absolute) from console!
+
+    $ python previewserver.py /path/to/my/site
+    $ python build.py /path/to/my/site
+
+The above will use `/path/to/my/site` as the base. That means `pages/`, `posts/`,
+and `config.json` must live there. The build directory will also live there (unless an
+absolute path is specified for `build_dir`)

@@ -1,3 +1,4 @@
+#!/usr/bin/python
 from flask import Flask, abort, redirect, url_for, render_template
 import markdown
 import codecs
