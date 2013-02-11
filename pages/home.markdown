@@ -1,3 +1,10 @@
+{
+	"title" : "Home",
+	"template" : "website2.html"
+}
+
+~~~~~~~
+
 === content ===
 Test
 --- content ---

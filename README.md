@@ -62,48 +62,42 @@ Site specific files are as follows (these files must be presense):
    unless overriden by the meta file (explained later)
  - `templates/blog.html`: Blog main page. Not yet available
  - `templates/post.html`: Blog post pages. Not yet available
- - `pages/home.markdown`: The content for the homepage. (Markdown file)
- - `pages/home.meta`: The meta file for the homepage. (JSON file)
+ - `pages/home.markdown`: The content for the homepage. (Markdown file, kinda)
 
 Let's have an overview on how funnel's routing works
 (excluding the blog as it's N/A).
 
  1. Funnel looks through your `pages` directory and see all the filenames. The
     filename corresponds to the postfixes to the url. For example,
-    http://example.com/about/ will correspond to about.markdown and about.meta.
+    http://example.com/about/ will correspond to about.markdown.
     Note that the extension must be correct. Markdown files can have the
-    extension of "markdown", "md", "mkd", "txt". The meta files must end with
-    "meta".
+    extension of "markdown", "md", "mkd", "txt".
  2. The default page (with the url of http://example.com) is routed to the page
-    with the name home. This is why home.markdown and home.meta is required.
+    with the name home. This is why home.markdown is required.
  3. The content of home.markdown is examined and compiled into HTML (explained
     in details later) and passed in to the jinja2 template for rendering.
- 4. The meta file is converted from its json format to a dictionary and passed
-    to the jinja2 template under the variable name `meta`
 
 Let's construct a page for About Us, a common page for many website:
 
 First, you probably want to create a jinja2 template. For this you must refer
-to the jinja2 documentations. Then you need to create 2 files, about.markdown
-and about.meta under the pages directory.
+to the jinja2 documentations. Then you need to create about.markdown
+under the pages directory.
 
-In about.meta, you need to specify a JSON object. There's 1 attribute that's
-required, which is "title". This will be useful to display the title of the page
-(example: `<title>{{ title }} - My Site</title>`).
+Inside about.markdown, there needs to be 2 sections. At the beginning of the file is
+the meta, where you could specify either a JSON object or a key value store.
+
+The second section is your markdown. This is separated by a line of `~~~~~`, where
+the length doesn't matter (greater than 1). You can just write
+whatever markdown you need and that will be compiled to HTML and can be
+displayed using `{{ content }}`.
+
+Here's an example:
 
     {
       "title" : "About Us"
     }
 
-The value "About Us" will be passed as `title` to jinja2 (so you can display
-using `{{ title }}`). The rest of that JSON object will be passed as a
-dictionary of `meta` to jinja2 (in this case `meta == {}`)
-
-Now you can save the file and open up about.markdown. You can just write
-whatever markdown you need and that will be compiled to HTML and can be
-displayed using `{{ content }}`. Example:
-
-Markdown file:
+    ~~~~~~~~~~~~~
 
     About
     =====
@@ -124,6 +118,26 @@ This is stored into the variable `content`. So when you call
 
 The above HTML will be rendered by the browser.
 
+JSON is ugly looking, we could also use a different format here. The above file
+is equivilant to the following:
+
+    title: About Us
+    ~~~~~~~~~~~~~
+
+    About
+    =====
+
+    Funnel is awesome!
+
+If you don't have a `~~~~~` separator in the file, it is assumed that there is
+no meta to the page and `meta` in the jinja2 template will be `{}`. `title` will
+be the page name (**pagename**.markdown)
+
+This format uses `:` to separate between the key and the value. It first tries
+to parse the right side of the `:` with `eval` in python. If that fails, the
+result will be a string. (oooh, it seems like you could have math expressions
+at the right side and evaluates to a number!)
+
 This process can be repeated to create any number of pages. Just make sure you
 have a working template.
 
@@ -133,6 +147,9 @@ variables to the jinja2 template by specifying sections in the markdown file.
 Each section is compiled into HTML and then passed into jinja2.
 
 Markdown File:
+
+    .... Meta....
+    ~~~~~~~~
 
     === sectionleft ===
     `Hello, I'm from section left!`
@@ -149,7 +166,7 @@ example given, `{{ sectionleft }}` will give you
 `<p><code>Hello, I'm from section left!</code></p>`. `{{ sectionright }}` will
 give you `<p>Hello, I'm from section right!</p>`.
 
-Last feature, in the meta file, you can specify a page to be rendered from a
+Last feature, in the meta description, you can specify a page to be rendered from a
 different template under the templates directory. Example:
 
     {

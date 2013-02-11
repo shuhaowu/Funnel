@@ -1,37 +1,59 @@
-import flask
-import codecs
+from flask import Flask, abort, redirect, url_for, render_template
 import markdown
+import codecs
 import os
-import json
-app = flask.Flask(__name__)
-import datetime
+from datetime import datetime
 import re
+import json
+
+try:
+  import cStringIO as StringIO
+except ImportError:
+  import StringIO
+
+app = Flask(__name__)
+meta_content_sep_regex = re.compile(os.linesep + r"[~]+" + os.linesep)
+section_headers_regex = re.compile(r"(===)\W+(\w+)\W+(===)")
+section_body_regex = r"===\W+{name}\W+===(.+)---\W+{name}\W+---"
 
 EXTENSIONS = ["markdown", "md", "mkd", "txt"]
 
-with open("config.json") as f:
-  config = json.load(f)
-
 @app.before_request
-def beforeRequest():
-  app.jinja_env.globals["generated"] = datetime.datetime.now()
+def before_request():
+  app.jinja_env.globals["generated"] = datetime.now()
 
-def getFilename(folder, name):
+def get_filename(folder, name):
   for ext in EXTENSIONS:
-    filename = "%s/%s.%s" % (folder, name, ext)
+    filename = "{root}/{folder}/{name}.{ext}".format(root=app.config["ROOT_DIR"], folder=folder, name=name, ext=ext)
     if os.path.exists(filename):
       return filename
 
-  filename = "%s/%s" % (folder, name)
-  if os.path.exists(filename):
-    return filename
-  else:
-    return None
+  filename = "{root}/{folder}/{name}".format(root=app.config["ROOT_DIR"], folder=folder, name=name)
+  return filename if os.path.exists(filename) else None
 
-sectionHeadersRegex = re.compile(r"(===)\W+(\w+)\W+(===)")
-sectionBodyRegex = r"===\W+%s\W+===(.+)---\W+%s\W+---"
-def retrieveContent(folder, name):
-  filename = getFilename(folder, name)
+
+def simple_meta_parser(text):
+  text = StringIO.StringIO(text)
+  line_num = 0
+  meta = {}
+  for line in text:
+    line_num += 1
+    line = line.strip()
+    r = line.split(":", 1)
+    if len(r) != 2:
+      raise ValueError("Meta parsing failed on line {0}.".format(line_num))
+    key = r[0].strip()
+    try:
+      value = eval(r[1].strip()) # lol
+    except (SyntaxError, NameError):
+      value = r[1].strip() # lolwut
+
+    meta[key] = value
+
+  return meta
+
+def retrieve_content(folder, name):
+  filename = get_filename(folder, name)
   if filename is None:
     return None
 
@@ -39,74 +61,77 @@ def retrieveContent(folder, name):
   text = f.read()
   f.close()
 
-  sectionHeaders = sectionHeadersRegex.findall(text)
-  if len(sectionHeaders) == 0:
-    return {"content" : text}
+  r = meta_content_sep_regex.split(text, 1)
+  if len(r) == 2:
+    try:
+      meta = json.loads(r[0].strip())
+    except ValueError:
+      meta = simple_meta_parser(r[0].strip())
+    text = r[1].strip()
+  else:
+    meta = {"title": name}
+
+  section_headers = section_headers_regex.findall(text)
+  if len(section_headers) == 0:
+    return meta, {"content": text}
   else:
     sections = {}
-    for section in sectionHeaders:
-      sectionName = section[1]
-      sectionBody = re.findall(sectionBodyRegex % (sectionName, sectionName), text, flags=re.S)[0]
-      sectionBody = sectionBody.strip()
-      sections[sectionName] = sectionBody
-    return sections
+    for section in section_headers:
+      section_name = section[1]
+      section_body = re.findall(section_body_regex.format(name=section_name), text, flags=re.S)[0]
+      section_body = section_body.strip()
+      sections[section_name] = section_body
+    return meta, sections
 
-def retrieveMeta(folder, name):
-  f = codecs.open("%s/%s.meta" % (folder, name), mode="r", encoding="utf8")
-  text = f.read()
-  f.close()
-  return json.loads(text)
-
-@app.route("/blog/")
-def displayBlog(): #TODO: not complete
-  return flask.render_template("blog.html")
-
-@app.route("/blog/<postname>/")
-def displayPost(postname):
+def _display_page(pagename):
   try:
-    content = retrieveContent("posts", postname)
-    meta = retrieveMeta("posts", postname)
-    if not meta.get("html", False):
-      for c in content:
-        content[c] = markdown.markdown(content[c])
-  except IOException:
-    return flask.abort(404)
-  if content is None:
-    return flask.abort(404)
-  return flask.render_template("post.html", post=postname,
-      title=meta.pop("title"), meta=meta, **content)
-
-def _displayPage(pagename):
-  if pagename == "favicon.ico":
-    return flask.abort(404)# TODO: Implement this
-
-  try:
-    content = retrieveContent("pages", pagename)
-    meta = retrieveMeta("pages", pagename)
-    if not meta.get("html", False):
-      for c in content:
-        content[c] = markdown.markdown(content[c])
+    meta, content = retrieve_content("pages", pagename)
   except IOError:
-    return flask.abort(404)
-  template = meta.get("template", "website.html")
-  if content is None:
-    return flask.abort(404)
-
-  return flask.render_template(template, page=pagename,
-      title=meta.pop("title"), meta=meta, **content)
+    return abort(404)
+  else:
+    for c in content:
+      content[c] = markdown.markdown(content[c])
+    template = meta.get("template", "website.html")
+    if content is None:
+      return abort(404)
+    return render_template(template, page=pagename, title=meta.pop("title"), meta=meta, **content)
 
 @app.route("/<pagename>/")
-def displayPage(pagename):
-  return _displayPage(pagename)
-
-if "404name" in config:
-  @app.route(("/%s" % config["404name"]) + ("" if config["404type"] == "file" else "/"))
-  def display404():
-    return _displayPage("404")
+def display_page(pagename):
+  return _display_page(pagename)
 
 @app.route("/")
 def home():
-  return flask.redirect(flask.url_for("displayPage", pagename="home"))
+  return redirect(url_for("display_page", pagename="home"))
+
+def get_config(root):
+  with open("{0}/config.json".format(root)) as f:
+    return json.load(f)
+
+  # Default. Good enough for github deployment.
+  return {
+    "build_dir" : "build",
+    "404type" : "file",
+    "404name" : "404.html"
+  }
+
+def setup_server(root):
+  # Good old global variables. Probably should use some sort of flask env
+  # variables, but this is the same.
+  app.config["ROOT_DIR"] = root
+
+  config = get_config(root)
+  if "404name" in config:
+    @app.route(("/{0}".format(config["404name"])) + ("" if config["404type"] == "file" else "/"))
+    def display404():
+      return _display_page("404")
 
 if __name__ == "__main__":
+  import sys
+  if len(sys.argv) > 1:
+    root = sys.argv[1].strip().rstrip("/")
+  else:
+    root = "."
+
+  setup_server(root)
   app.run(debug=True, host="")
