@@ -9,6 +9,7 @@ import re
 SECTION_HEADERS_REGEX = re.compile(r"(===)\W+(\w+)\W+(===)")
 SECTION_BODIES_REGEX = r"===\W+{name}\W+===(.+)===\W+{name}\W+==="
 ACCEPTED_EXTENSIONS = ("markdown", "md", "mkd", "txt")
+STR_HEURISTICS = re.compile(r"^[a-zA-Z0-9\-_ ]+$")
 
 class NotFound(LookupError): pass
 
@@ -43,13 +44,19 @@ def parse_meta(meta):
       raise ValueError("Format of the line is wrong for meta on line {0} with text {1}".format(i, line))
     key = _temp[0].strip()
     value = _temp[1].strip()
-    try:
-      value = eval(value)
-    except: # yeah. We're evil like that.
+    # guess that this is not python code. Because eval will eval things like
+    # file to <type 'file'>
+
+    if STR_HEURISTICS.match(value):
+      value = unicode(value)
+    else:
       try:
-        value = unicode(value)
-      except Exception, e:
-        raise ValueError("Meta parsing failed with error: {}".format(e))
+        value = eval(value)
+      except: # yeah. We're evil like that.
+        try:
+          value = unicode(value)
+        except Exception, e:
+          raise ValueError("Meta parsing failed with error: {}".format(e))
 
     m[key] = value
 
@@ -110,7 +117,7 @@ def get_filename(root, folder, name):
 
 def get_config(root):
   if os.path.exists(os.path.join(root, "funnel.config")):
-    with os.path.join(root, "funnel.config") as f:
+    with open(os.path.join(root, "funnel.config")) as f:
       data = f.read()
 
     return parse_meta(data)
@@ -197,7 +204,18 @@ def create_flask_app(root):
   from flask import Flask, abort, redirect, url_for, render_template
   from math import ceil
 
-  app = Flask(__name__)
+  # TODO: Yay. unix hack. Someone fix that
+  if root == ".":
+    template_folder = os.path.join(os.getcwd(), "templates")
+    static_folder = os.path.join(os.getcwd(), "static")
+  elif not root.startswith("/"):
+    template_folder = os.path.join(os.getcwd(), root, "templates")
+    static_folder = os.path.join(os.getcwd(), root, "static")
+  else:
+    template_folder = os.path.join(root, "templates")
+    static_folder = os.path.join(root, "static")
+
+  app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
   config = get_config(root)
 
   all_posts = compile_blog_posts(root, "posts")
@@ -254,13 +272,18 @@ def create_flask_app(root):
     if next_page > total_pages:
       next_page = None
 
-    return render_template("blog.html", posts=posts, current_page=current_page, previous_page=previous_page, next_page=next_page, total_pages=total_pages, config=config)
+    return render_template("blog.html", posts=posts, all_posts=all_posts, current_page=current_page, previous_page=previous_page, next_page=next_page, total_pages=total_pages, config=config)
 
   @app.route("/blog/<postid>.html")
   def post(postid):
     meta, html = all_posts[postid_to_index[postid]]
 
     return render_template("post.html", content=html, config=config, **meta)
+
+  if "rss" in config:
+    @app.route(config["rss"])
+    def rss():
+      return render_template("rss.xml", all_posts=all_posts)
 
   if "404name" in config:
     # wtf?

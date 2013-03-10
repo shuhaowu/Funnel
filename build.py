@@ -41,3 +41,7 @@ if __name__ == "__main__":
   config = get_config(root)
   app.config["FREEZER_DESTINATION"] = config["build_dir"] if config["build_dir"].startswith("/") else root + "/" + config["build_dir"]
   freezer.freeze()
+
+  if "CNAME" in config:
+    with open(os.path.join(app.config["FREEZER_DESTINATION"], "CNAME"), "w") as f:
+      f.write(config["CNAME"] + os.linesep)
