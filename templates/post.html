@@ -1,0 +1,24 @@
+<html>
+  <head>
+    <title>{{ title }} - BLAWG</title>
+  </head>
+  <body>
+
+
+    <h2>Blog post: {{ title }}</h2>
+
+    {% autoescape off %}
+    {% for meta, content in posts %}
+    <div class="post">
+      <h4><a href="/blog/{{ meta.postid }}.html">{{ meta.title }}</a></h4>
+      <p>Written on {{ meta.date.ctime() }} by {{ meta.author }}</p>
+      <hr />
+      {{ content }}
+    </div>
+    <hr />
+    {% endfor %}
+    {% endautoescape %}
+
+    <p>Maybe you can add disqus or something here</p>
+  </body>
+</html>

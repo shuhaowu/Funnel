@@ -1,40 +1,43 @@
 #!/usr/bin/python
-from flask_frozen import Freezer
-from previewserver import app, setup_server, get_config
-import os
-freezer = Freezer(app)
-
-@freezer.register_generator
-def display_posts():
-  if not os.path.exists("posts"):
-    return
-
-  files = os.listdir("{root}/posts".format(root=app.config["ROOT_DIR"]))
-  for filename in files:
-    if os.path.isfile("{root}/posts/{filename}".format(root=app.config["ROOT_DIR"], filename=filename)):
-      name = filename.rsplit(".", 1)[0]
-      yield {"postname" : name}
-
-@freezer.register_generator
-def display_page():
-  files = os.listdir("{root}/pages".format(root=app.config["ROOT_DIR"]))
-  for filename in files:
-    if filename.startswith("404"):
-      continue
-
-    if os.path.isfile("{root}/pages/{filename}".format(root=app.config["ROOT_DIR"], filename=filename)):
-      name = filename.rsplit(".", 1)[0]
-      yield {"pagename" : name}
 
 if __name__ == "__main__":
   import sys
+  import os
+  import os.path
+  from flask_frozen import Freezer
+  from funnel import create_flask_app, ACCEPTED_EXTENSIONS, get_config
+
   if len(sys.argv) > 1:
     root = sys.argv[1].strip().rstrip("/")
   else:
     root = "."
 
+  app = create_flask_app(root)
+  freezer = Freezer(app)
+
+  @freezer.register_generator
+  def page():
+    for fn in os.listdir(os.path.join(root, "pages")):
+      if fn.startswith("404"):
+        continue
+
+      _tmp = fn.rsplit(".", 1)
+      if len(_tmp) == 1:
+        yield {"name": _tmp[0]}
+      else:
+        if _tmp[1] in ACCEPTED_EXTENSIONS:
+          yield {"name": _tmp[0]}
+
+  @freezer.register_generator
+  def blog():
+    for i in xrange(1, app.config["total_pages"]+1):
+      yield {"current_page": i}
+
+  @freezer.register_generator
+  def post():
+    for postid in app.config["postids"]:
+      yield {"postid": postid}
+
   config = get_config(root)
   app.config["FREEZER_DESTINATION"] = config["build_dir"] if config["build_dir"].startswith("/") else root + "/" + config["build_dir"]
-  setup_server(root)
   freezer.freeze()
-  print "Build Complete!"

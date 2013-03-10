@@ -1,0 +1,30 @@
+<html>
+  <head>
+    <title>BLAWG</title>
+  </head>
+  <body>
+    <h2>Welcome to MY STUPID BLOG</h2>
+
+    {% autoescape off %}
+    {% for meta, content in posts %}
+    <div class="post">
+      <h4><a href="/blog/{{ meta.postid }}.html">{{ meta.title }}</a></h4>
+      <p>Written on {{ meta.date.ctime() }} by {{ meta.author }}</p>
+      <hr />
+      {{ content }}
+    </div>
+    <hr />
+    {% endfor %}
+    {% endautoescape %}
+
+    <p>
+      {% if previous_page %}
+      <a href="/blog/page/{{ previous_page }}.html">Previous</a> |
+      {% endif %}
+      <a href="/blog/page/{{ current_page }}.html">Page {{ current_page }}</a> of {{ total_pages }}
+      {% if next_page %}
+      | <a href="/blog/page/{{ next_page }}.html">Next</a>
+      {% endif %}
+    </p>
+  </body>
+</html>
