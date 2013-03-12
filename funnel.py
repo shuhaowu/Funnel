@@ -128,6 +128,8 @@ def get_config(root):
       "404type": "file",
       "404name": "404.html",
       "author": "Anonymous",
+      "blog": "off",
+      "pages": "on"
     }
 
 def get_thing(root, folder, name):
@@ -201,6 +203,9 @@ def compile_blog_posts(root, folder):
   return posts
 
 def create_flask_app(root):
+  """Creates the funnel flask app and sets up everything so that running it
+  would start a preview server.
+  """
   from flask import Flask, abort, redirect, url_for, render_template
   from math import ceil
 
@@ -218,72 +223,80 @@ def create_flask_app(root):
   app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
   config = get_config(root)
 
-  all_posts = compile_blog_posts(root, "posts")
-  # We need to inject the author into meta
-  if "author" in config:
-    for meta, html in all_posts:
-      if "author" not in meta:
-        meta["author"] = config["author"]
+  if config.get("blog", "off").lower() == "on":
+    all_posts = compile_blog_posts(root, "posts")
+    # We need to inject the author into meta
+    if "author" in config:
+      for meta, html in all_posts:
+        if "author" not in meta:
+          meta["author"] = config["author"]
 
-  # We also need quick look up in case the blog is HUGE.
-  postid_to_index = {post[0]["postid"]: i for i, post in enumerate(all_posts)}
+    # We also need quick look up in case the blog is HUGE.
+    postid_to_index = {post[0]["postid"]: i for i, post in enumerate(all_posts)}
 
-  posts_per_page = float(config.get("posts_per_page", 10.0))
-  total_pages = int(ceil(len(all_posts) / posts_per_page))
+    posts_per_page = float(config.get("posts_per_page", 10.0))
+    total_pages = int(ceil(len(all_posts) / posts_per_page))
 
-  # It's late like 1:48 (gonna be 3.. daylight savings)
-  # I'M SORRY THAT IT HAS TO COME THIS.
-  # I need to allow the build script to see these stupid things.
-  # So we're gonna stick this shit into the config
-  app.config["total_pages"] = total_pages
-  app.config["postids"] = postid_to_index.keys()
+    # It's late like 1:48 (gonna be 3.. daylight savings)
+    # I'M SORRY THAT IT HAS TO COME THIS.
+    # I need to allow the build script to see these stupid things.
+    # So we're gonna stick this shit into the config
+    app.config["total_pages"] = total_pages
+    app.config["postids"] = postid_to_index.keys()
 
   @app.before_request
   def before_request():
     app.jinja_env.globals["generated"] = datetime.now()
+    app.jinja_env.globals["config"] = config
 
-  @app.route("/")
-  def home():
-    return redirect(url_for("page", name="home"))
+  if config.get("pages", "on").lower() == "on":
+    @app.route("/")
+    def home():
+      return redirect(url_for("page", name="home"))
 
-  @app.route("/<name>/")
-  def page(name):
-    try:
-      meta, content = get_thing(root, "pages", name)
-    except NotFound:
-      return abort(404)
-    else:
-      template = meta.get("template", config.get("template", "page.html"))
-      return render_template(template, name=name, title=meta.pop("title", None), meta=meta, config=config, **content)
+    @app.route("/<name>/")
+    def page(name):
+      try:
+        meta, content = get_thing(root, "pages", name)
+      except NotFound:
+        return abort(404)
+      else:
+        template = meta.get("template", config.get("template", "page.html"))
+        return render_template(template, name=name, title=meta.pop("title", None), meta=meta, **content)
+  else:
+    @app.route("/")
+    def home():
+      return redirect(url_for("blog", current_page=1))
 
-  @app.route("/blog/")
-  @app.route("/blog/page/<int:current_page>.html")
-  def blog(current_page=1):
-    min_index = int((current_page - 1) * posts_per_page)
-    max_index = int(current_page * posts_per_page)
+  if config.get("blog", "off").lower() == "on":
+    @app.route("/blog/")
+    @app.route("/blog/page/<int:current_page>.html")
+    def blog(current_page=1):
+      min_index = int((current_page - 1) * posts_per_page)
+      max_index = int(current_page * posts_per_page)
 
-    posts = all_posts[min_index:max_index]
+      posts = all_posts[min_index:max_index]
 
-    previous_page = int(current_page - 1)
-    if previous_page <= 0:
-      previous_page = None
+      previous_page = int(current_page - 1)
+      if previous_page <= 0:
+        previous_page = None
 
-    next_page = int(current_page + 1)
-    if next_page > total_pages:
-      next_page = None
+      next_page = int(current_page + 1)
+      if next_page > total_pages:
+        next_page = None
 
-    return render_template("blog.html", posts=posts, all_posts=all_posts, current_page=current_page, previous_page=previous_page, next_page=next_page, total_pages=total_pages, config=config)
+      return render_template("blog.html", posts=posts, all_posts=all_posts, current_page=current_page, previous_page=previous_page, next_page=next_page, total_pages=total_pages)
 
-  @app.route("/blog/<postid>.html")
-  def post(postid):
-    meta, html = all_posts[postid_to_index[postid]]
+    @app.route("/blog/<postid>.html")
+    def post(postid):
+      meta, html = all_posts[postid_to_index[postid]]
 
-    return render_template("post.html", content=html, config=config, **meta)
+      return render_template("post.html", content=html, **meta)
 
-  if "rss" in config:
-    @app.route(config["rss"])
-    def rss():
-      return render_template("rss.xml", all_posts=all_posts)
+    if "rss" in config:
+      @app.route(config["rss"])
+      def rss():
+        return render_template("rss.xml", all_posts=all_posts)
 
   if "404name" in config:
     # wtf?
