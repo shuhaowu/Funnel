@@ -19,7 +19,6 @@ git push;
 EOF
 )
 
-echo
 echo "Funnel. A simple static site/blog generator. "
 echo "https://github.com/shuhaowu/funnel"
 echo
@@ -106,7 +105,15 @@ then
     if [ "$github" == "y" -o "$github" == "Y" ]
     then
       echo $GITHUB_DEPLOY_SCRIPT > $src_dir/src/deploy
+      echo "deploy" >> $src_dir/src/.gitignore
       chmod +x $src_dir/src/deploy
+
+      echo -n "Do you want to specify a CNAME for your github site (leave blank for no CNAME)? [No CNAME] "
+      read cname
+      if [ "$cname" != "" ]
+      then
+        echo $cname > $src_dir/build/CNAME
+      fi
     fi
   else
     exit 1
