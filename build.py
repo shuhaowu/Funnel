@@ -4,7 +4,8 @@ if __name__ == "__main__":
   import sys
   import os
   import os.path
-  from flask_frozen import Freezer
+
+  from frozen_flask import Freezer
   from funnel import create_flask_app, ACCEPTED_EXTENSIONS, get_config
 
   if len(sys.argv) > 1:
@@ -28,19 +29,21 @@ if __name__ == "__main__":
         if _tmp[1] in ACCEPTED_EXTENSIONS:
           yield {"name": _tmp[0]}
 
-  @freezer.register_generator
-  def blog():
-    for i in xrange(1, app.config["total_pages"]+1):
-      yield {"current_page": i}
-
-  @freezer.register_generator
-  def post():
-    for postid in app.config["postids"]:
-      yield {"postid": postid}
-
   config = get_config(root)
-  app.config["FREEZER_DESTINATION"] = config["build_dir"] if config["build_dir"].startswith("/") else root + "/" + config["build_dir"]
+  if config.get("blog", "off").lower() == "on":
+    @freezer.register_generator
+    def blog():
+      for i in xrange(1, app.config["total_pages"]+1):
+        yield {"current_page": i}
 
-  # Ignore.. Frozen Flask better be 0.10+
+    @freezer.register_generator
+    def post():
+      for postid in app.config["postids"]:
+        yield {"postid": postid}
+
+  app.config["FREEZER_DESTINATION"] = config["build_dir"]
   app.config["FREEZER_DESTINATION_IGNORE"] = (".git*", "CNAME")
+
+  # Custom frozen flask stuff
+  app.config["FUNNEL_ROOT"] = root
   freezer.freeze()

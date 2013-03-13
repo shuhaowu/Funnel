@@ -1,0 +1,117 @@
+#!/bin/bash
+
+# I'm not a good shell script writer. So feel free to help me improve.
+
+
+pushd `dirname $0` > /dev/null
+SCRIPT_DIR=`pwd`
+popd > /dev/null
+
+GITHUB_DEPLOY_SCRIPT=$( cat <<EOF
+echo "Deploying to github...";
+cd "\$( dirname \$0 )";
+python $SCRIPT_DIR/build.py .;
+cd ..;
+cd build;
+git add .;
+git commit -a;
+git push;
+EOF
+)
+
+echo
+echo "Funnel. A simple static site/blog generator. "
+echo "https://github.com/shuhaowu/funnel"
+echo
+
+
+src_dir=$2
+
+if [ "$src_dir" == "" ]
+then
+  src_dir=.
+fi
+
+if [ "$1" == "preview" ]
+then
+  echo "Starting funnel preview server on directory '$src_dir'..."
+  python $SCRIPT_DIR/funnel.py $src_dir
+elif [ "$1" == "build" ]
+then
+  echo "Building static website..."
+  python $SCRIPT_DIR/build.py $src_dir
+elif [ "$1" == "generate" ]
+then
+  echo "Welcome to Funnel! You have chosen to generate a new website in the directory '$src_dir'"
+  echo -n "This will probably destroy stuff if there are things there already. Are you sure you want to proceed? [y/N] "
+  read proceed
+  if [ "$proceed" == "y" -o "$proceed" == "Y" ]
+  then
+    mkdir -p -v $src_dir
+    mkdir -p -v $src_dir/src
+    mkdir -p -v $src_dir/build
+    mkdir -p -v $src_dir/src/templates
+    mkdir -p -v $src_dir/src/static
+
+    touch $src_dir/src/funnel.config
+    echo "build_dir: ../build" >> $src_dir/src/funnel.config
+    echo
+    echo -n "What is your name? [Anonymous] "
+    read name
+    if [ "$name" == "" ]
+    then
+      name=Anonymous
+    fi
+    echo "author: $name" >> $src_dir/src/funnel.config
+    echo -n "Do you wish to turn on static pages? [Y/n] "
+    read pages
+    if [ "$pages" == "n" -o "$pages" == "N" ]
+    then
+      pages=off
+    else
+      pages=on
+      mkdir -p $src_dir/src/pages
+      touch $src_dir/src/templates/page.html
+    fi
+    echo "pages: $pages" >> $src_dir/src/funnel.config
+    echo -n "Do you wish to turn on blogging? [y/N] "
+    read blog
+    if [ "$blog" == "y" -o "$blog" == "Y" ]
+    then
+      blog=on
+      touch $src_dir/src/templates/blog.html
+      touch $src_dir/src/templates/post.html
+      echo -n "Do you wish to have RSS enabled? If so, enter the for url for the RSS feed here (including the preceding / please) or leave it blank for no rss [No RSS] "
+      read rss
+      if [ "$rss" != "" ]
+      then
+        touch $src_dir/src/templates/rss.xml
+        echo "rss: $rss" >> $src_dir/src/funnel.config
+      fi
+
+    else
+      blog=off
+    fi
+    echo "blog: $blog" >> $src_dir/src/funnel.config
+    echo -n "Do you have a custom 404 page? If so, enter the url here (include the preceding / please) or leave blank for no 404 page [No 404] "
+    read notfound
+    if [ "$notfound" != "" ]
+    then
+      touch $src_dir/src/templates/404.html
+      echo "404: $notfound" >> $src_dir/src/funnel.config
+    fi
+
+    echo -n "Generation complete! Do you want to include a github deploy script? [y/N] "
+    read github
+    if [ "$github" == "y" -o "$github" == "Y" ]
+    then
+      echo $GITHUB_DEPLOY_SCRIPT > $src_dir/src/deploy
+      chmod +x $src_dir/src/deploy
+    fi
+  else
+    exit 1
+  fi
+else
+  echo "You need to select an option from: preview, build, generate."
+  echo "The last argument of this script is the target directory to operate on."
+fi

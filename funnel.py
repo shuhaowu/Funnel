@@ -298,11 +298,10 @@ def create_flask_app(root):
       def rss():
         return render_template("rss.xml", all_posts=all_posts)
 
-  if "404name" in config:
-    # wtf?
-    @app.route(("/{0}".format(config["404name"])) + ("" if config["404type"] == "file" else "/"))
+  if "404" in config:
+    @app.route((config["404"]))
     def not_found():
-      return page("404")
+      return render_template("404.html")
 
   return app
 

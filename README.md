@@ -33,22 +33,17 @@ What funnel provides:
 
 What funnel is NOT:
 
- - A full featured blog.
+ - A full featured blog generator.
  - A full featured site generator.
- - Pain-free (although I hope to make Funnel pain free soon, see next section)
 
-Funnel feature wishlist on the order of importance:
+Install
+-------
 
- - [x] Fork Frozen Flask or whatever so that it doesn't wipe the build directory
-       clean after a build. (This gets rid of things like .git and CNAME, which
-       is important for a github deploy).
- - [ ] Test the mechanism for disabling blog or pages.
- - [ ] A way to specify image classes for markdown, allowing embedding images
-       that looks nice (float left or right, in a container).
- - [ ] Syntax highlighting for code.
- - [ ] A generic auto deploy script and an skeleton generation script.
- - [ ] A more solid meta parser
- - [ ] More test coverage and source code comments
+Funnel depends on the Flask stack. It also depend on a library called
+Frozen-Flask. However, you do not need to install Frozen-Flask as a specially
+modified version is included.
+
+... incomplete instructions
 
 Getting started
 ---------------
