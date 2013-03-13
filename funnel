@@ -34,11 +34,11 @@ fi
 if [ "$1" == "preview" ]
 then
   echo "Starting funnel preview server on directory '$src_dir'..."
-  python $SCRIPT_DIR/funnel.py $src_dir
+  python -c "import funnel; funnel.preview(\"$src_dir\")"
 elif [ "$1" == "build" ]
 then
   echo "Building static website..."
-  python $SCRIPT_DIR/build.py $src_dir
+  python -c "import funnel; funnel.build(\"$src_dir\")"
 elif [ "$1" == "generate" ]
 then
   echo "Welcome to Funnel! You have chosen to generate a new website in the directory '$src_dir'"

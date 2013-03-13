@@ -30,6 +30,8 @@ What funnel provides:
  - A solid templating system (yay Jinja2!)
  - Allow you to do whatever the hell you want (modifying the source code, embed
    Disqus, Gangnum style videos, Google Analytics, MathJax, whatever!)
+ - A very very very crude skeleton site generation and github pages deploy
+   script and a very crude CLI.
 
 What funnel is NOT:
 
@@ -43,7 +45,11 @@ Funnel depends on the Flask stack. It also depend on a library called
 Frozen-Flask. However, you do not need to install Frozen-Flask as a specially
 modified version is included.
 
-... incomplete instructions
+The simplest way would be getting this and downloading `python setup.py install`.
+This would setups funnel and add a command line tool named "funnel".
+
+Right now there is no other way of installing as several hacks are done to make
+this actually work....
 
 Getting started
 ---------------
