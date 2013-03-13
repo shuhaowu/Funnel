@@ -176,6 +176,21 @@ at http://yoursite.com/static/....
 If you need an example, please checkout the reference implementation at:
 https://github.com/shuhaowu/shuhaowu.github.com/tree/src
 
+Previewing and Building the Pages
+---------------------------------
+
+To preview. cd into the directory and do `$ funnel preview`. This will start a
+preview server at http://localhost:5000
+
+To build, cd into the directory and do `$ funnel build`. This will build the
+pages into static HTML for deployment into `../build` if you followed the
+generation script.
+
+If you have a github deploy script, you need to setup the build directory with
+the github (making sure that git push and so forth works) and just do
+`$ ./deploy` in your src directory.
+
+
 Advanced Usages
 ---------------
 
