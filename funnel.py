@@ -9,7 +9,9 @@ import re
 SECTION_HEADERS_REGEX = re.compile(r"(===)\W+(\w+)\W+(===)")
 SECTION_BODIES_REGEX = r"===\W+{name}\W+===(.+)===\W+{name}\W+==="
 ACCEPTED_EXTENSIONS = ("markdown", "md", "mkd", "txt")
-STR_HEURISTICS = re.compile(r"^[a-zA-Z0-9\-_ ]+$")
+# The first character cannot be 0. In that case we need to try for eval
+# first before we turn things into a string.
+STR_HEURISTICS = re.compile(r"^[a-zA-Z\-_ ][a-zA-Z0-9\-_ ]*$")
 
 class NotFound(LookupError): pass
 
@@ -19,7 +21,7 @@ def parse_meta(meta):
   """Parses through the meta of a markdown file. The structure is:
 
       key: value
-      key: value
+      key: value # comment
       key: value
 
   This attempts to parse value using eval, upon any sort of error, it will try
@@ -39,6 +41,13 @@ def parse_meta(meta):
   m = {}
   for i, line in enumerate(meta.strip().split(os.linesep)):
     line = line.strip()
+
+    # Note that in a regular file there will be no empty lines..
+    # That is blocked by the fact that we split at the first \n\n.
+    if not line or line.startswith("#"): # comment or empty line..
+      continue
+
+    line = line.split("#", 1)[0] # comments...
     _temp = line.split(":", 1)
     if len(_temp) != 2:
       raise ValueError("Format of the line is wrong for meta on line {0} with text {1}".format(i, line))

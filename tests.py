@@ -6,7 +6,10 @@ class FunnelTests(unittest.TestCase):
     meta = """
     string: bare words!!
     string2: "mrrow"
-    integer: 1
+
+    # should be ignored
+
+    integer: 1 # just a comment
     list: [42, "whoa", ["really?", 1337]]
     dict: {"meow": 1}
     """
@@ -26,6 +29,7 @@ class FunnelTests(unittest.TestCase):
 
     self.assertTrue("dict" in meta)
     self.assertEquals({"meow": 1}, meta["dict"])
+
 
   def test_parse_meta_failure(self):
     meta = """
@@ -48,7 +52,7 @@ Test 123 *yay*
 
     content = funnel.parse_content(md)
     self.assertTrue("main" in content)
-    self.assertEquals("<p>Test 123 <em>yay</em></p>", content["main"][0])
+    self.assertEquals("<p>Test 123 <em>yay</em></p>", content["main"])
 
     # With sections
     md = """
@@ -68,10 +72,10 @@ Test 321 *yay*
     content = funnel.parse_content(md)
 
     self.assertTrue("section1" in content)
-    self.assertEquals("<p>Test 123 <em>yay</em></p>", content["section1"][0])
+    self.assertEquals("<p>Test 123 <em>yay</em></p>", content["section1"])
 
     self.assertTrue("section2" in content)
-    self.assertEquals("<p>Test 321 <em>yay</em></p>", content["section2"][0])
+    self.assertEquals("<p>Test 321 <em>yay</em></p>", content["section2"])
 
   def test_parse_all(self):
     text ="""title: Homepage
