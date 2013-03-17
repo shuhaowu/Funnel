@@ -5,13 +5,11 @@ import os
 import os.path
 from datetime import datetime
 import re
+import json
 
 SECTION_HEADERS_REGEX = re.compile(r"(===)\W+(\w+)\W+(===)")
 SECTION_BODIES_REGEX = r"===\W+{name}\W+===(.+)===\W+{name}\W+==="
 ACCEPTED_EXTENSIONS = ("markdown", "md", "mkd", "txt")
-# The first character cannot be 0. In that case we need to try for eval
-# first before we turn things into a string.
-STR_HEURISTICS = re.compile(r"^[a-zA-Z\-_ ][a-zA-Z0-9\-_ ]*$")
 
 class NotFound(LookupError): pass
 
@@ -56,16 +54,10 @@ def parse_meta(meta):
     # guess that this is not python code. Because eval will eval things like
     # file to <type 'file'>
 
-    if STR_HEURISTICS.match(value):
+    try:
+      value = json.loads(value)
+    except ValueError:
       value = unicode(value)
-    else:
-      try:
-        value = eval(value)
-      except: # yeah. We're evil like that.
-        try:
-          value = unicode(value)
-        except Exception, e:
-          raise ValueError("Meta parsing failed with error: {}".format(e))
 
     m[key] = value
 
@@ -215,7 +207,7 @@ def create_flask_app(root):
   """Creates the funnel flask app and sets up everything so that running it
   would start a preview server.
   """
-  from flask import Flask, abort, redirect, url_for, render_template
+  from flask import Flask, abort, redirect, url_for, render_template, g
   from math import ceil
 
   # TODO: Yay. unix hack. Someone fix that
@@ -232,29 +224,34 @@ def create_flask_app(root):
   app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
   config = get_config(root)
 
-  if config.get("blog", "off").lower() == "on":
-    all_posts = compile_blog_posts(root, "posts")
-    # We need to inject the author into meta
-    if "author" in config:
-      for meta, html in all_posts:
-        if "author" not in meta:
-          meta["author"] = config["author"]
+  # This looks inefficient...
+  # also seems like bad practise? With globals and all...
+  def update_posts():
+    if config.get("blog", "off").lower() == "on":
+      g.all_posts = compile_blog_posts(root, "posts")
+      # We need to inject the author into meta
+      if "author" in config:
+        for meta, html in g.all_posts:
+          if "author" not in meta:
+            meta["author"] = config["author"]
 
-    # We also need quick look up in case the blog is HUGE.
-    postid_to_index = {post[0]["postid"]: i for i, post in enumerate(all_posts)}
+      # We also need quick look up in case the blog is HUGE.
+      g.postid_to_index = {post[0]["postid"]: i for i, post in enumerate(g.all_posts)}
 
-    posts_per_page = float(config.get("posts_per_page", 10.0))
-    total_pages = int(ceil(len(all_posts) / posts_per_page))
+      g.posts_per_page = float(config.get("posts_per_page", 10.0))
+      g.total_pages = int(ceil(len(g.all_posts) / g.posts_per_page))
 
-    # It's late like 1:48 (gonna be 3.. daylight savings)
-    # I'M SORRY THAT IT HAS TO COME THIS.
-    # I need to allow the build script to see these stupid things.
-    # So we're gonna stick this shit into the config
-    app.config["total_pages"] = total_pages
-    app.config["postids"] = postid_to_index.keys()
+      # It's late like 1:48 (gonna be 3.. daylight savings)
+      # I'M SORRY THAT IT HAS TO COME THIS.
+      # I need to allow the build script to see these stupid things.
+      # So we're gonna stick this shit into the config
+      app.config["total_pages"] = g.total_pages
+      app.config["postids"] = g.postid_to_index.keys()
+
 
   @app.before_request
   def before_request():
+    update_posts()
     app.jinja_env.globals["generated"] = datetime.now()
     app.jinja_env.globals["config"] = config
 
@@ -281,31 +278,31 @@ def create_flask_app(root):
     @app.route("/blog/")
     @app.route("/blog/page/<int:current_page>.html")
     def blog(current_page=1):
-      min_index = int((current_page - 1) * posts_per_page)
-      max_index = int(current_page * posts_per_page)
+      min_index = int((current_page - 1) * g.posts_per_page)
+      max_index = int(current_page * g.posts_per_page)
 
-      posts = all_posts[min_index:max_index]
+      posts = g.all_posts[min_index:max_index]
 
       previous_page = int(current_page - 1)
       if previous_page <= 0:
         previous_page = None
 
       next_page = int(current_page + 1)
-      if next_page > total_pages:
+      if next_page > g.total_pages:
         next_page = None
 
-      return render_template("blog.html", posts=posts, all_posts=all_posts, current_page=current_page, previous_page=previous_page, next_page=next_page, total_pages=total_pages)
+      return render_template("blog.html", posts=posts, all_posts=g.all_posts, current_page=current_page, previous_page=previous_page, next_page=next_page, total_pages=g.total_pages)
 
     @app.route("/blog/<postid>.html")
     def post(postid):
-      meta, html = all_posts[postid_to_index[postid]]
+      meta, html = g.all_posts[g.postid_to_index[postid]]
 
       return render_template("post.html", content=html, **meta)
 
     if "rss" in config:
       @app.route(config["rss"])
       def rss():
-        return render_template("rss.xml", all_posts=all_posts)
+        return render_template("rss.xml", all_posts=g.all_posts)
 
   if "404" in config:
     @app.route((config["404"]))

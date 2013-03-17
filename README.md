@@ -190,7 +190,6 @@ If you have a github deploy script, you need to setup the build directory with
 the github (making sure that git push and so forth works) and just do
 `$ ./deploy` in your src directory.
 
-
 Advanced Usages
 ---------------
 

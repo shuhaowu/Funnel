@@ -12,6 +12,7 @@ class FunnelTests(unittest.TestCase):
     integer: 1 # just a comment
     list: [42, "whoa", ["really?", 1337]]
     dict: {"meow": 1}
+    date: 2013-01-02
     """
 
     meta = funnel.parse_meta(meta)
@@ -29,6 +30,9 @@ class FunnelTests(unittest.TestCase):
 
     self.assertTrue("dict" in meta)
     self.assertEquals({"meow": 1}, meta["dict"])
+
+    self.assertTrue("date" in meta)
+    self.assertEquals("2013-01-02", meta["date"])
 
 
   def test_parse_meta_failure(self):
