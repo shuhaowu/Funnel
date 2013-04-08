@@ -80,6 +80,7 @@ then
       blog=on
       touch $src_dir/src/templates/blog.html
       touch $src_dir/src/templates/post.html
+      mkdir -p $src_dir/src/posts
       echo -n "Do you wish to have RSS enabled? If so, enter the for url for the RSS feed here (including the preceding / please) or leave it blank for no rss [No RSS] "
       read rss
       if [ "$rss" != "" ]
