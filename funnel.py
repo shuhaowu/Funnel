@@ -7,8 +7,8 @@ from datetime import datetime
 import re
 import json
 
-SECTION_HEADERS_REGEX = re.compile(r"(===)\W+(\w+)\W+(===)")
-SECTION_BODIES_REGEX = r"===\W+{name}\W+===(.+)===\W+{name}\W+==="
+SECTION_HEADERS_REGEX = re.compile(r"(===)\W*(\w+)\W*(===)")
+SECTION_BODIES_REGEX = r"===\W*{name}\W*===(.+)===\W*{name}\W*==="
 ACCEPTED_EXTENSIONS = ("markdown", "md", "mkd", "txt")
 
 class NotFound(LookupError): pass
@@ -89,7 +89,10 @@ def parse_content(content):
   else:
     s = {}
     for section in sections:
-      md = re.findall(SECTION_BODIES_REGEX.format(name=section), content, flags=re.S)[0].strip()
+      matches = re.findall(SECTION_BODIES_REGEX.format(name=section), content, flags=re.S)
+      if not len(matches):
+        raise ValueError("Cannot find section {0}. Check for unmatched ending tags?".format(section))
+      md = matches[0].strip()
       s[section] = markdown.markdown(md)
 
     return s

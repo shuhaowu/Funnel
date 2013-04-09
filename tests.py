@@ -108,6 +108,15 @@ Homepage is great, isn't it?
     self.assertEquals({"title": u"test"}, meta)
     self.assertEquals({"main": u""}, content)
 
+  def test_malformed_section(self):
+    text = """title: test
+
+===section===
+===notsection===
+    """
+    with self.assertRaises(ValueError):
+      funnel.parse_all(text)
+
 
 if __name__ == "__main__":
   unittest.main()
