@@ -102,8 +102,15 @@ def parse_all(text):
   text = text.strip()
 
   text = text.split(os.linesep * 2, 1)
-  meta = text[0].strip()
-  content = text[1].strip()
+
+  meta = ""
+  content = ""
+
+  if len(text) > 0:
+    meta = text[0].strip()
+    if len(text) > 1:
+      content = text[1].strip()
+
 
   return parse_meta(meta), parse_content(content)
 

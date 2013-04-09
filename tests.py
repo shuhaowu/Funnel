@@ -96,5 +96,18 @@ Homepage is great, isn't it?
 
     self.assertTrue("main" in content)
 
+  def test_parse_no_content(self):
+    text = ""
+    meta, content = funnel.parse_all(text)
+    self.assertEquals({}, meta)
+    self.assertEquals({"main": u""}, content)
+
+  def test_parse_meta_only(self):
+    text = "title: test"
+    meta, content = funnel.parse_all(text)
+    self.assertEquals({"title": u"test"}, meta)
+    self.assertEquals({"main": u""}, content)
+
+
 if __name__ == "__main__":
   unittest.main()
