@@ -231,6 +231,8 @@ def create_flask_app(root):
   app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
   config = get_config(root)
 
+  app.jinja_env.autoescape = False
+
   # This looks inefficient...
   # also seems like bad practise? With globals and all...
   def update_posts():
