@@ -208,6 +208,17 @@ def compile_blog_posts(root, folder):
 
       meta["postid"] = postid
 
+      # Get the exerpt and the whole thing
+      if "exerpt" not in meta:
+        # We get the first horizontal rule and before that is the exerpt.
+        # That means first horizontal rule will disappear.
+        splitted = html.split("<hr />", 1)
+        if len(splitted) == 2:
+          html = "".join(splitted)
+          meta["exerpt"] = splitted[0]
+      else:
+        meta["exerpt"] = markdown.markdown(meta["exerpt"])
+
       posts.append((meta, html))
 
   posts.sort(key=lambda p: p[0]["date"], reverse=True)

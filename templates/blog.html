@@ -11,7 +11,7 @@
       <h4><a href="/blog/{{ meta.postid }}.html">{{ meta.title }}</a></h4>
       <p>Written on {{ meta.date.ctime() }} by {{ meta.author }}</p>
       <hr />
-      {{ content }}
+      {{ meta.exerpt }}
     </div>
     <hr />
     {% endfor %}
