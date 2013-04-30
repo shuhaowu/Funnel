@@ -213,9 +213,11 @@ def compile_blog_posts(root, folder):
         # We get the first horizontal rule and before that is the exerpt.
         # That means first horizontal rule will disappear.
         splitted = html.split("<hr />", 1)
-        if len(splitted) == 2:
-          html = "".join(splitted)
-          meta["exerpt"] = splitted[0]
+        html = "".join(splitted)
+
+        # We set exerpt to 0 anyway if the length of splitted is 1 (no exerpt)
+        # this way templates can trust that exerpt has something.
+        meta["exerpt"] = splitted[0]
       else:
         meta["exerpt"] = markdown.markdown(meta["exerpt"])
 
