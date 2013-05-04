@@ -11,6 +11,25 @@ SECTION_HEADERS_REGEX = re.compile(r"(===)\W*(\w+)\W*(===)")
 SECTION_BODIES_REGEX = r"===\W*{name}\W*===(.+)===\W*{name}\W*==="
 ACCEPTED_EXTENSIONS = ("markdown", "md", "mkd", "txt")
 
+_boolean_map = {
+  "yes": True,
+  "on": True,
+  "true": True,
+  "no": False,
+  "off": False,
+  "false": False,
+  True: True,
+  False: False,
+  1: True,
+  0: False,
+  "1": True,
+  "0": False,
+  None: None
+}
+
+def boolean_map(v, default=False):
+  return _boolean_map.get(v.lower(), _boolean_map[default])
+
 class NotFound(LookupError): pass
 
 # Dammit Jim, our markdown files looks like HTTP requests.
@@ -252,17 +271,23 @@ def create_flask_app(root):
   # This looks inefficient...
   # also seems like bad practise? With globals and all...
   def update_posts():
-    if config.get("blog", "off").lower() == "on":
+    if boolean_map(config.get("blog", "off")):
       g.all_posts = compile_blog_posts(root, "posts")
-      # We need to inject the author into meta
-      if "author" in config:
-        for meta, html in g.all_posts:
-          if "author" not in meta:
-            meta["author"] = config["author"]
+      # We need to inject the author into meta, build a lookup index, and
+      # filter out the unpublished.
 
-      # We also need quick look up in case the blog is HUGE.
+      g.unpublished = []
+      for i, post in enumerate(g.all_posts):
+        meta, html = post
+        if "author" not in meta and "author" in config:
+          meta["author"] = config["author"]
+        
+        if boolean_map(meta.get("published", "no")):
+          g.unpublished.append(post)
+          
+      for post in g.unpublished:
+        g.all_posts.remove(post)
       g.postid_to_index = {post[0]["postid"]: i for i, post in enumerate(g.all_posts)}
-
       g.posts_per_page = float(config.get("posts_per_page", 10.0))
       g.total_pages = int(ceil(len(g.all_posts) / g.posts_per_page))
 
@@ -272,6 +297,7 @@ def create_flask_app(root):
       # So we're gonna stick this shit into the config
       app.config["total_pages"] = g.total_pages
       app.config["postids"] = g.postid_to_index.keys()
+      app.config["unpublished"] = g.unpublished
 
 
   @app.before_request
@@ -280,7 +306,7 @@ def create_flask_app(root):
     app.jinja_env.globals["generated"] = datetime.now()
     app.jinja_env.globals["config"] = config
 
-  if config.get("pages", "on").lower() == "on":
+  if boolean_map(config.get("pages", "on")):
     @app.route("/")
     def home():
       return redirect(url_for("page", name="home"))
@@ -299,7 +325,7 @@ def create_flask_app(root):
     def home():
       return redirect(url_for("blog", current_page=1))
 
-  if config.get("blog", "off").lower() == "on":
+  if boolean_map(config.get("blog", "off")):
     @app.route("/blog/")
     @app.route("/blog/page/<int:current_page>.html")
     def blog(current_page=1):
@@ -320,7 +346,18 @@ def create_flask_app(root):
 
     @app.route("/blog/<postid>.html")
     def post(postid):
-      meta, html = g.all_posts[g.postid_to_index[postid]]
+      try:
+        meta, html = g.all_posts[g.postid_to_index[postid]]
+      except KeyError:
+        # omg hacks!
+        found = False
+        for meta, html in g.unpublished:
+          if meta["postid"] == postid:
+            found = True
+            break
+          
+        if not found:
+          return abort(404)
 
       return render_template("post.html", content=html, **meta)
 
@@ -379,6 +416,9 @@ def build(root):
     def post():
       for postid in app.config["postids"]:
         yield {"postid": postid}
+      
+      for meta, html in app.config["unpublished"]:
+        yield {"postid": meta["postid"]}
 
   app.config["FREEZER_DESTINATION"] = config["build_dir"]
   app.config["FREEZER_DESTINATION_IGNORE"] = (".git*", "CNAME")

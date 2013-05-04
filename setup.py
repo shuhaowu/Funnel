@@ -3,7 +3,7 @@
 from setuptools import setup
 
 setup(name="Funnel",
-      version="0.1",
+      version="0.2",
       description="A simple static website/blog generator.",
       author="Shuhao Wu",
       author_email="shuhao@shuhaowu.com",

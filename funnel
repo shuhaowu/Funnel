@@ -19,8 +19,7 @@ git push;
 EOF
 )
 
-echo "Funnel. A simple static site/blog generator. "
-echo "https://github.com/shuhaowu/funnel"
+echo "Funnel 0.2. A simple static site/blog generator."
 echo
 
 
