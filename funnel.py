@@ -1,4 +1,18 @@
 #!/usr/bin/env python
+# This file is part of Funnel.
+#
+# Funnel is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Funnel is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Funnel.  If not, see <http://www.gnu.org/licenses/>.
 
 import markdown
 import os
@@ -281,10 +295,10 @@ def create_flask_app(root):
         meta, html = post
         if "author" not in meta and "author" in config:
           meta["author"] = config["author"]
-        
+
         if boolean_map(meta.get("published", "no")):
           g.unpublished.append(post)
-          
+
       for post in g.unpublished:
         g.all_posts.remove(post)
       g.postid_to_index = {post[0]["postid"]: i for i, post in enumerate(g.all_posts)}
@@ -355,7 +369,7 @@ def create_flask_app(root):
           if meta["postid"] == postid:
             found = True
             break
-          
+
         if not found:
           return abort(404)
 
@@ -416,7 +430,7 @@ def build(root):
     def post():
       for postid in app.config["postids"]:
         yield {"postid": postid}
-      
+
       for meta, html in app.config["unpublished"]:
         yield {"postid": meta["postid"]}
 

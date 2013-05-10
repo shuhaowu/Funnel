@@ -15,6 +15,7 @@
 
 # The original library is called flask_frozen. We embedded so we flipped the
 # name so it's not confused.
+# I modified a bit of the library so that it works with Funnel's needs.
 
 # Copyright (c) 2010-2012 by Simon Sapin and contributors. See AUTHORS
 # for more details.
