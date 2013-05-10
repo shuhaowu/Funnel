@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 # This file is part of Funnel.
 #
 # Funnel is free software: you can redistribute it and/or modify
@@ -12,7 +13,9 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Funnel.  If not, see <http://www.gnu.org/licenses/>.from setuptools import setup
+# along with Funnel.  If not, see <http://www.gnu.org/licenses/>.
+
+from setuptools import setup
 
 setup(name="Funnel",
       version="0.2",
