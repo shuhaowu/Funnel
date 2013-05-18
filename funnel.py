@@ -296,7 +296,7 @@ def create_flask_app(root):
         if "author" not in meta and "author" in config:
           meta["author"] = config["author"]
 
-        if boolean_map(meta.get("published", "no")):
+        if not boolean_map(meta.get("published", "yes")):
           g.unpublished.append(post)
 
       for post in g.unpublished:
