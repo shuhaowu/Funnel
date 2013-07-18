@@ -14,8 +14,8 @@ Licensed under GPLv3. I'm pretty sure that building websites with this do not
 require you from putting the website under GPL. So you should have no issues
 with that aspect.
 
-Reference site: http://shuhaowu.com
-Reference site source: https://github.com/shuhaowu/shuhaowu.github.com/tree/src
+Reference site: https://shuhaowu.com
+Reference site source: https://github.com/shuhaowu/shuhaowu.github.com/tree/master
 
 Features
 --------
@@ -255,8 +255,8 @@ thing. Everything in between is the markdown to be compiled to html.
 
 This is done in the reference implementation:
 
- - Markdown: https://github.com/shuhaowu/shuhaowu.github.com/tree/src/pages/home.md
- - Template: https://github.com/shuhaowu/shuhaowu.github.com/tree/src/templates/homepage.html
+ - Markdown: https://github.com/shuhaowu/shuhaowu.github.com/tree/master/pages/home.md
+ - Template: https://github.com/shuhaowu/shuhaowu.github.com/tree/master/templates/homepage.html
 
  Note that `{{ main }}` is gone and it doesn't have any value associated to it
  unless you have a section named main.
