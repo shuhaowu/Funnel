@@ -55,8 +55,7 @@ def parse_meta(meta):
       key: value # comment
       key: value
 
-  This attempts to parse value using eval, upon any sort of error, it will try
-  to convert value to an unicode. Example:
+      This uses json.loads(). If it fails it will turn it into a string.
 
       ohai: yay bare words
       list: ["lists", "are", "awesome"]
@@ -84,8 +83,6 @@ def parse_meta(meta):
       raise ValueError("Format of the line is wrong for meta on line {0} with text {1}".format(i, line))
     key = _temp[0].strip()
     value = _temp[1].strip()
-    # guess that this is not python code. Because eval will eval things like
-    # file to <type 'file'>
 
     try:
       value = json.loads(value)
