@@ -237,6 +237,7 @@ def compile_blog_posts(root, folder):
           meta["date"] = datetime.strptime(meta["date"], "%Y-%m-%d")
 
       meta["postid"] = postid
+      meta["filename"] = fn
 
       # Get the exerpt and the whole thing
       if "exerpt" not in meta:
