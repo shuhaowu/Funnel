@@ -1,0 +1,8 @@
+language: python
+python:
+- "2.7"
+
+env:
+- TESTING=1
+
+script: "python -m unittest discover"

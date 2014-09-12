@@ -11,11 +11,28 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Funnel.  If not, see <http://www.gnu.org/licenses/>.from setuptools import setup
-import unittest
-import funnel
+# along with Funnel.  If not, see <http://www.gnu.org/licenses/>.
 
-class FunnelTests(unittest.TestCase):
+import unittest
+import os
+
+from funnel import utils
+
+
+class UtilsTest(unittest.TestCase):
+  def test_boolean_map(self):
+    self.assertTrue(utils.boolean_map("yes"))
+    self.assertTrue(utils.boolean_map("on"))
+    self.assertTrue(utils.boolean_map("true"))
+    self.assertTrue(utils.boolean_map("1"))
+    self.assertTrue(utils.boolean_map(1))
+
+    self.assertFalse(utils.boolean_map("no"))
+    self.assertFalse(utils.boolean_map("off"))
+    self.assertFalse(utils.boolean_map("false"))
+    self.assertFalse(utils.boolean_map("0"))
+    self.assertFalse(utils.boolean_map(0))
+
   def test_parse_meta(self):
     meta = """
     string: bare words!!
@@ -29,7 +46,7 @@ class FunnelTests(unittest.TestCase):
     date: 2013-01-02
     """
 
-    meta = funnel.parse_meta(meta)
+    meta = utils.parse_meta(meta)
     self.assertTrue("string" in meta)
     self.assertEquals("bare words!!", meta["string"])
 
@@ -48,7 +65,6 @@ class FunnelTests(unittest.TestCase):
     self.assertTrue("date" in meta)
     self.assertEquals("2013-01-02", meta["date"])
 
-
   def test_parse_meta_failure(self):
     meta = """
     novalue
@@ -60,7 +76,7 @@ class FunnelTests(unittest.TestCase):
     # implementation.
 
     with self.assertRaises(ValueError):
-      funnel.parse_meta(meta)
+      utils.parse_meta(meta)
 
   def test_parse_content(self):
     # No sections
@@ -68,7 +84,7 @@ class FunnelTests(unittest.TestCase):
 Test 123 *yay*
     """
 
-    content = funnel.parse_content(md)
+    content = utils.parse_content(md)
     self.assertTrue("main" in content)
     self.assertEquals("<p>Test 123 <em>yay</em></p>", content["main"])
 
@@ -87,7 +103,7 @@ Test 321 *yay*
 === section2 ===
     """
 
-    content = funnel.parse_content(md)
+    content = utils.parse_content(md)
 
     self.assertTrue("section1" in content)
     self.assertEquals("<p>Test 123 <em>yay</em></p>", content["section1"])
@@ -95,8 +111,8 @@ Test 321 *yay*
     self.assertTrue("section2" in content)
     self.assertEquals("<p>Test 321 <em>yay</em></p>", content["section2"])
 
-  def test_parse_all(self):
-    text ="""title: Homepage
+  def test_parse(self):
+    text = """title: Homepage
 
 Homepage is great, isn't it?
 
@@ -104,7 +120,7 @@ Homepage is great, isn't it?
 
 > What about a quote?"""
 
-    meta, content = funnel.parse_all(text)
+    meta, content = utils.parse(text)
     self.assertTrue("title" in meta)
     self.assertEquals("Homepage", meta["title"])
 
@@ -112,13 +128,13 @@ Homepage is great, isn't it?
 
   def test_parse_no_content(self):
     text = ""
-    meta, content = funnel.parse_all(text)
+    meta, content = utils.parse(text)
     self.assertEquals({}, meta)
     self.assertEquals({"main": u""}, content)
 
   def test_parse_meta_only(self):
     text = "title: test"
-    meta, content = funnel.parse_all(text)
+    meta, content = utils.parse(text)
     self.assertEquals({"title": u"test"}, meta)
     self.assertEquals({"main": u""}, content)
 
@@ -129,8 +145,19 @@ Homepage is great, isn't it?
 ===notsection===
     """
     with self.assertRaises(ValueError):
-      funnel.parse_all(text)
+      utils.parse(text)
 
+  def test_get_config(self):
+    # default config
+    config = utils.get_config("/does/not/exists")
+    self.assertEquals("Anonymous", config["author"])
+    self.assertEquals("/404.html", config["404"])
+    self.assertEquals(False, config["blog"])
+    self.assertEquals(True, config["pages"])
 
-if __name__ == "__main__":
-  unittest.main()
+    config = utils.get_config(os.path.join(os.path.dirname(os.path.abspath(__file__)), "teststuff"))
+    self.assertEquals("Shuhao", config["author"])
+    self.assertEquals("/404.html", config["404"])
+    self.assertEquals(True, config["blog"])
+    self.assertEquals(True, config["pages"])
+    self.assertEquals("/rss.xml", config["rss"])
