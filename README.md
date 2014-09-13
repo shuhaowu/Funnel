@@ -197,3 +197,14 @@ https://github.com/shuhaowu/shuhaowu.github.com/tree/src
 Lastly, for static pages, you can use a different template to render. In the
 meta of a page, you can specify `template: yourtemplate.html`, and funnel will
 use yourtemplate.html to render that page instead of page.html.
+
+Commandline Usage
+-----------------
+
+To install, you need libyaml-dev. After that, you can simply run:
+
+    # python setup.py install
+
+After that you should have `funnel` as a commandline utils!
+
+`funnel` should give you all the options.
