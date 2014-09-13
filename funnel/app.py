@@ -73,6 +73,8 @@ def create_flask_app(config):
     blog_posts = Blog(config)
     observer = Observer()
     observer.schedule(blog_posts, blog_posts.path, recursive=True)
+    app.blog = blog_posts
+    app.observer = observer
 
     @app.route("/blog/")
     @app.route("/blog/page/<int:current_page>.html")
@@ -112,8 +114,6 @@ def create_flask_app(config):
     def not_found(e=None):
       return render_template("404.html")
 
-  app.blog = blog_posts
-  app.observer = observer
   return app
 
 

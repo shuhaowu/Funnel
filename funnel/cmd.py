@@ -24,9 +24,13 @@ from .utils import get_config
 def preview(root=os.getcwd()):
   config = get_config(root)
   app = create_flask_app(config)
-  app.observer.start()
+  if hasattr(app, "observer"):
+    app.observer.start()
+
   app.run(debug=True, host="", use_reloader=False)
-  app.observer.stop()
+
+  if hasattr(app, "observer"):
+    app.observer.stop()
 
 
 def build(root=os.getcwd(), target="build"):

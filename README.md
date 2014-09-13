@@ -1,6 +1,8 @@
 Funnel
 ======
 
+[![Build Status](https://travis-ci.org/shuhaowu/Funnel.svg?branch=master)](https://travis-ci.org/shuhaowu/Funnel)
+
 Funnel is an ultra lightweight static site generator written in Python. It
 focuses on being lightweight and not telling you what you have to do. With
 Funnel, you can:
