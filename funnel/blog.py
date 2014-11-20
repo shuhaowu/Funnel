@@ -30,6 +30,11 @@ class Blog(FileSystemEventHandler):
     self.config = config
 
     self.posts_per_page = config.get("posts_per_page", 10)
+
+    self.path = os.path.join(self.config["_root"], "posts")
+    self.refresh_blog_posts()
+
+  def refresh_blog_posts(self):
     self.total_pages = 0
     self.postid_to_index = dict()
 
@@ -37,10 +42,6 @@ class Blog(FileSystemEventHandler):
     self.published = []
     self.unpublished = []
 
-    self.path = os.path.join(self.config["_root"], "posts")
-    self.refresh_blog_posts()
-
-  def refresh_blog_posts(self):
     for fn in os.listdir(self.path):
       _temp = fn.rsplit(".", 1)
       if len(_temp) > 1 and _temp[1] not in utils.ACCEPTED_EXTENSIONS:
