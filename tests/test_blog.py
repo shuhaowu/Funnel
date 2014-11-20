@@ -106,3 +106,7 @@ class BlogTest(unittest.TestCase):
     posts = self.blog.posts_on_page(3)
     self.assertEquals(1, len(posts))
     self.assertEquals("post1", posts[0][0]["title"])
+
+  def test_refresh_blog_posts(self):
+    self.blog.refresh_blog_posts()
+    self.test_init()
