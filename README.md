@@ -35,8 +35,6 @@ What funnel provides:
  - A solid templating system (yay Jinja2!)
  - Allow you to do whatever the hell you want (modifying the source code, embed
    Disqus, Gangnum style videos, Google Analytics, MathJax, whatever!)
- - A very very very crude skeleton site generation and github pages deploy
-   script and a very crude CLI.
 
 What funnel is NOT:
 
@@ -77,7 +75,7 @@ everything before the first `-`. That is to say, you can name your files like
 The url to access any particular blog post is http://yoursite.com/blog/<id>.html
 and the url to access the front page of the blog is http://yoursite.com/blog/.
 For pagination, the page number i is accessible via
-http://yoursite.com/blog/page/<i>.html
+`http://yoursite.com/blog/page/<i>.html`
 
 ### Markdown Style ###
 
